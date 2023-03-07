@@ -18,12 +18,19 @@ type Type struct {
 	typ        string
 	isRequired bool
 	Value      interface{}
+	defaultVal interface{}
 }
 
 func (t *Type) Require() *Type {
 	t.isRequired = true
 	return t
 }
+
+func (t *Type) Default(v interface{}) *Type {
+	t.defaultVal = v
+	return t
+}
+
 func (t *Type) Key(k string) *Type {
 	t.key = k
 	return t
@@ -66,18 +73,22 @@ func (s *Cafe) Initialize() error {
 		if err != nil {
 			return err
 		}
+		val := os.Getenv(v.key)
+		if val == "" && v.defaultVal != nil {
+			val = fmt.Sprintf("%v", v.defaultVal)
+		}
 		switch v.typ {
 		case "string":
-			v.Value = os.Getenv(v.key)
+			v.Value = val
 		case "int":
-			v.Value, err = strconv.Atoi(os.Getenv(v.key))
+			v.Value, err = strconv.Atoi(val)
 			if err != nil {
-				return err
+				println(err.Error())
 			}
 		case "bool":
-			v.Value, err = strconv.ParseBool(os.Getenv(v.key))
+			v.Value, err = strconv.ParseBool(val)
 			if err != nil {
-				return err
+				println(err.Error())
 			}
 		case "object":
 			// TODO

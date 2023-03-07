@@ -3,6 +3,8 @@ package cafe
 import (
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSchema(t *testing.T) {
@@ -83,4 +85,40 @@ func TestServerOptions(t *testing.T) {
 	if dbName != "postgres" || err != nil {
 		t.Error("expected DB_NAME to be postgres")
 	}
+}
+
+func TestServerOptionsWithDefault(t *testing.T) {
+	config, err := New(
+		Schema{
+			"PORT": Int("SERVER_PORT_HTTP").Require().Default(8080), // PORT is an integer that is set by the SERVER_PORT environment variable and is not required
+		},
+	)
+	assert.NoError(t, err)
+	assert.NotNil(t, config)
+	sPort, err := config.GetInt("PORT")
+	assert.NoError(t, err)
+	assert.Equal(t, 8080, sPort)
+}
+func TestServerOptionsStringWithDefault(t *testing.T) {
+	config, err := New(
+		Schema{
+			"PORT": String("SERVER_PORT_HTTP").Require().Default("8080"), // PORT is an integer that is set by the SERVER_PORT environment variable and is not required
+		},
+	)
+	assert.NoError(t, err)
+	assert.NotNil(t, config)
+	sPort, err := config.GetString("PORT")
+	assert.NoError(t, err)
+	assert.Equal(t, "8080", sPort)
+}
+
+func TestServerOptionsStringWithMisMatchDefaultDefault(t *testing.T) {
+	config, err := New(
+		Schema{
+			"PORT": String("SERVER_PORT_HTTP").Require().Default("8080"), // PORT is an integer that is set by the SERVER_PORT environment variable and is not required
+		},
+	)
+	assert.NoError(t, err)
+	_, err = config.GetInt("PORT")
+	assert.Error(t, err)
 }
