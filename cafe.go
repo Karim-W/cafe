@@ -79,6 +79,9 @@ func (s *Cafe) Initialize() error {
 		}
 		switch v.typ {
 		case "string":
+			if v.isRequired && val == "" {
+				return Err_REQUIRED_KEY_MISSING
+			}
 			v.Value = val
 		case "int":
 			v.Value, err = strconv.Atoi(val)
@@ -102,6 +105,7 @@ func (s *Cafe) Initialize() error {
 	}
 	return nil
 }
+
 func (s *Cafe) GetString(k string) (string, error) {
 	spilt := strings.Split(k, ".")
 	if len(spilt) == 1 {
