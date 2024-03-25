@@ -45,7 +45,7 @@ func (t *Type) Before() error {
 
 func (t *Type) Validate() error {
 	if t.isRequired && t.Value == nil {
-		return Err_REQUIRED_KEY_MISSING
+		return buildRequiredKeyMissing(t.key)
 	}
 	return nil
 }
@@ -80,7 +80,7 @@ func (s *Cafe) Initialize() error {
 		switch v.typ {
 		case "string":
 			if v.isRequired && val == "" {
-				return Err_REQUIRED_KEY_MISSING
+				return buildRequiredKeyMissing(v.key)
 			}
 			v.Value = val
 		case "int":

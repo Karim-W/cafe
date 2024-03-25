@@ -11,3 +11,7 @@ const (
 	str_UNREGISTERED      string = " is not a registered key"
 	str_NON_MATCHED_FETCH string = "%s is registered as a %s, but you are trying to fetch it as a %s"
 )
+
+func buildRequiredKeyMissing(key string) error {
+	return fmt.Errorf("required key %s missing", key)
+}
