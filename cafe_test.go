@@ -1,6 +1,7 @@
 package cafe
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -180,5 +181,46 @@ func TestSubSchema(t *testing.T) {
 	barQuxRes, err := subSchema.GetBool("qux")
 	if barQuxRes != true || err != nil {
 		t.Fatalf("expected bar.qux to be true got %t", barQuxRes)
+	}
+}
+
+func TestPrintJSON(t *testing.T) {
+	// seed
+	os.Setenv("FOO", "foo")
+	os.Setenv("BAR_BAZ", "10")
+	os.Setenv("BAR_QUX", "true")
+
+	s := NewCafeSchema(Schema{
+		"foo": String("FOO").Require(),
+		"bar": SubSchema("BAR", Schema{
+			"baz": Int("BAR_BAZ").Require(),
+			"qux": Bool("BAR_QUX").Require(),
+		}),
+	})
+
+	err := s.Initialize()
+	if err != nil {
+		fmt.Println(s.JSON())
+		t.Fatal(err)
+	}
+	fmt.Println(s.JSON())
+}
+
+func TestPrintEnv(t *testing.T) {
+	// seed
+	os.Setenv("FOO", "foo")
+	os.Setenv("BAR_BAZ", "10")
+
+	s := NewCafeSchema(Schema{
+		"foo": String("FOOBAR").Require(),
+		"bar": SubSchema("BAR", Schema{
+			"baz": Int("BAR_BAZ#").Require(),
+			"qux": Bool("BAR_QUX").Require(),
+		}),
+	})
+
+	err := s.Initialize()
+	if err != nil {
+		fmt.Println(s.Env())
 	}
 }
