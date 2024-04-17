@@ -62,6 +62,12 @@ func Bool(k string) *Type {
 	return &Type{typ: "bool", isRequired: false, key: k}
 }
 
+func SubSchema(k string, s Schema) *Type {
+	return &Type{typ: "subschema", isRequired: false, key: k, Value: &Cafe{
+		schema: s,
+	}}
+}
+
 // func Object(k string) *Type {
 // 	return &Type{typ: "object", isRequired: false, key: k}
 // }
@@ -93,6 +99,15 @@ func (s *Cafe) Initialize() error {
 			if err != nil {
 				println(err.Error())
 			}
+		case "subschema":
+			sub, ok := v.Value.(*Cafe)
+			if !ok {
+				return fmt.Errorf("subschema is not a Cafe")
+			}
+			err = sub.Initialize()
+			if err != nil {
+				return err
+			}
 		case "object":
 			// TODO
 		default:
@@ -103,6 +118,7 @@ func (s *Cafe) Initialize() error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -140,6 +156,18 @@ func (s *Cafe) GetBool(k string) (bool, error) {
 		return v.(bool), nil
 	}
 	return false, nil
+}
+
+func (s *Cafe) GetSubSchema(k string) (*Cafe, error) {
+	spilt := strings.Split(k, ".")
+	if len(spilt) == 1 {
+		v, err := s.fetch(k, "subschema")
+		if err != nil {
+			return nil, err
+		}
+		return v.(*Cafe), nil
+	}
+	return nil, nil
 }
 
 func (s *Cafe) fetch(k string, typ string) (interface{}, error) {

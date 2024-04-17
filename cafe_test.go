@@ -37,11 +37,10 @@ func TestSchema(t *testing.T) {
 	if bazRes != true || err != nil {
 		t.Error("expected baz to be true")
 	}
-
 }
 
 func TestServerOptions(t *testing.T) {
-	//seed
+	// seed
 	os.Setenv("SERVER_PORT", "8080")
 	os.Setenv("DB_HOST", "localhost")
 	os.Setenv("DB_PORT", "5432")
@@ -50,12 +49,20 @@ func TestServerOptions(t *testing.T) {
 	os.Setenv("DB_NAME", "postgres")
 	config, err := New(
 		Schema{
-			"PORT":        Int("SERVER_PORT"),              // PORT is an integer that is set by the SERVER_PORT environment variable and is not required
-			"DB_HOST":     String("DB_HOST").Require(),     // DB_HOST is a string that is required
-			"DB_PORT":     Int("DB_PORT").Require(),        // DB_PORT is an integer that is required
-			"DB_USER":     String("DB_USER").Require(),     // DB_USER is a string that is required
-			"DB_PASSWORD": String("DB_PASSWORD").Require(), // DB_PASSWORD is a string that is required
-			"DB_NAME":     String("DB_NAME").Require(),     // DB_NAME is a string that is required
+			"PORT": Int(
+				"SERVER_PORT",
+			), // PORT is an integer that is set by the SERVER_PORT environment variable and is not required
+			"DB_HOST": String("DB_HOST").Require(), // DB_HOST is a string that is required
+			"DB_PORT": Int(
+				"DB_PORT",
+			).Require(),
+			// DB_PORT is an integer that is required
+			"DB_USER": String("DB_USER").Require(), // DB_USER is a string that is required
+			"DB_PASSWORD": String(
+				"DB_PASSWORD",
+			).Require(),
+			// DB_PASSWORD is a string that is required
+			"DB_NAME": String("DB_NAME").Require(), // DB_NAME is a string that is required
 		},
 	)
 	if err != nil {
@@ -90,7 +97,11 @@ func TestServerOptions(t *testing.T) {
 func TestServerOptionsWithDefault(t *testing.T) {
 	config, err := New(
 		Schema{
-			"PORT": Int("SERVER_PORT_HTTP").Require().Default(8080), // PORT is an integer that is set by the SERVER_PORT environment variable and is not required
+			"PORT": Int(
+				"SERVER_PORT_HTTP",
+			).Require().
+				Default(8080),
+			// PORT is an integer that is set by the SERVER_PORT environment variable and is not required
 		},
 	)
 	assert.NoError(t, err)
@@ -99,10 +110,15 @@ func TestServerOptionsWithDefault(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 8080, sPort)
 }
+
 func TestServerOptionsStringWithDefault(t *testing.T) {
 	config, err := New(
 		Schema{
-			"PORT": String("SERVER_PORT_HTTP").Require().Default("8080"), // PORT is an integer that is set by the SERVER_PORT environment variable and is not required
+			"PORT": String(
+				"SERVER_PORT_HTTP",
+			).Require().
+				Default("8080"),
+			// PORT is an integer that is set by the SERVER_PORT environment variable and is not required
 		},
 	)
 	assert.NoError(t, err)
@@ -115,10 +131,54 @@ func TestServerOptionsStringWithDefault(t *testing.T) {
 func TestServerOptionsStringWithMisMatchDefaultDefault(t *testing.T) {
 	config, err := New(
 		Schema{
-			"PORT": String("SERVER_PORT_HTTP").Require().Default("8080"), // PORT is an integer that is set by the SERVER_PORT environment variable and is not required
+			"PORT": String(
+				"SERVER_PORT_HTTP",
+			).Require().
+				Default("8080"),
+			// PORT is an integer that is set by the SERVER_PORT environment variable and is not required
 		},
 	)
 	assert.NoError(t, err)
 	_, err = config.GetInt("PORT")
 	assert.Error(t, err)
+}
+
+func TestSubSchema(t *testing.T) {
+	// seed
+	os.Setenv("FOO", "foo")
+	os.Setenv("BAR_BAZ", "10")
+	os.Setenv("BAR_QUX", "true")
+
+	s := NewCafeSchema(Schema{
+		"foo": String("FOO").Require(),
+		"bar": SubSchema("BAR", Schema{
+			"baz": Int("BAR_BAZ").Require(),
+			"qux": Bool("BAR_QUX").Require(),
+		}),
+	})
+
+	err := s.Initialize()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fooRes, err := s.GetString("foo")
+	if fooRes != "foo" || err != nil {
+		t.Fatalf("expected foo to be foo got %s", fooRes)
+	}
+
+	subSchema, err := s.GetSubSchema("bar")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	barBazRes, err := subSchema.GetInt("baz")
+	if barBazRes != 10 || err != nil {
+		t.Fatalf("expected bar.baz to be 10 got %d", barBazRes)
+	}
+
+	barQuxRes, err := subSchema.GetBool("qux")
+	if barQuxRes != true || err != nil {
+		t.Fatalf("expected bar.qux to be true got %t", barQuxRes)
+	}
 }
